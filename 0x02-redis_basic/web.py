@@ -1,34 +1,36 @@
 #!/usr/bin/env python3
-""" expiring web cache module """
+"""
+Cache
+"""
 
 import redis
 import requests
 from typing import Callable
 from functools import wraps
 
-redis = redis.Redis()
+rd = redis.Redis()
 
 
-def wrap_requests(fn: Callable) -> Callable:
-    """ Decorator wrapper """
+def count_requests(method: Callable) -> Callable:
+    """requests"""
 
-    @wraps(fn)
+    @wraps(method)
     def wrapper(url):
-        """ Wrapper for decorator guy """
-        redis.incr(f"count:{url}")
-        cached_response = redis.get(f"cached:{url}")
-        if cached_response:
-            return cached_response.decode('utf-8')
-        result = fn(url)
-        redis.setex(f"cached:{url}", 10, result)
-        return result
+        """wrapper"""
+        rd.incr(f"count:{url}")
+        cached_html = rd.get(f"cached:{url}")
+        if cached_html:
+            return cached_html.decode('utf-8')
+
+        html = method(url)
+        rd.setex(f"cached:{url}", 10, html)
+        return html
 
     return wrapper
 
 
-@wrap_requests
+@count_requests
 def get_page(url: str) -> str:
-    """get page self descriptive
-    """
-    response = requests.get(url)
-    return response.text
+    """pages"""
+    req = requests.get(url)
+    return req.text
